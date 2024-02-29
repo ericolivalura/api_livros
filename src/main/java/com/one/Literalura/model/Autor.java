@@ -37,7 +37,7 @@ public class Autor {
         return id;
     }
 
-    private List<String> getTitulosDosLivris() {
+    private List<String> getTitulosDosLivros() {
         return livros.stream().map(Livro::getTitulo).collect(Collectors.toList());
     }
 
@@ -46,7 +46,7 @@ public class Autor {
         return "\n Autor: " + nome +
                 "\n Ano de nascimento: " + anoDeNascimento +
                 "\n Ano de falecimento: " + anoDeFalecimento +
-                "\n Livros: " + getTitulosDosLivris()
+                "\n Livros: " + getTitulosDosLivros()
                 ;
     }
 }

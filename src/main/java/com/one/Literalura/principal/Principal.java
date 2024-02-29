@@ -9,10 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class Principal {
 
@@ -34,29 +32,28 @@ public class Principal {
             2- listar livros registrados
             3- listar autores registrados
             4- listar autores vivos em um determinado ano
-            5- exibir estatísticas de downloads dos livros registrados
-            0 - sair
-            """;
+            5- listar livros em um determinado idioma
+            0 - sair""";
 
     public Principal(LivroRepository livroRepository, AutorRepository autorRepository) {
         this.livroRepository = livroRepository;
         this.autorRepository = autorRepository;
     }
 
-    public void muestraElMenu() {
+    public void mostrarMenu() {
 
-        var opcionElegida = -1;
-        while (opcionElegida != 0) {
+        var opcaoEscolhida = -1;
+        while (opcaoEscolhida != 0) {
             json = consumoAPI.obterDados(URL_BASE);
             System.out.println(menu);
-            opcionElegida = teclado.nextInt();
+            opcaoEscolhida = teclado.nextInt();
             teclado.nextLine();
-            switch (opcionElegida) {
+            switch (opcaoEscolhida) {
                 case 1 -> buscarLivroPeloTitulo();
-                case 2 -> listarLibrosRegistrados();
+                case 2 -> listarLivrosRegistrados();
                 case 3 -> listarAutoresRegistrados();
                 case 4 -> listarAutoresVivosEnAnoEspecifico();
-                case 5 -> exhibirEstadisticasDeDescargasDeLosLibrosRegistrados();
+                case 5 -> listarLivrosPorIdioma();
                 case 0 -> System.out.println("Até logo...");
                 default -> System.out.println("Opção inválida");
             }
@@ -64,7 +61,7 @@ public class Principal {
     }
 
     private void buscarLivroPeloTitulo() {
-        DadosLivro dadosLivro = getDatosLibro();
+        DadosLivro dadosLivro = getDatosLivro();
         if (dadosLivro != null) {
             Livro livro;
             DadosAutor dadosAutor = dadosLivro.autor().get(0);
@@ -89,7 +86,7 @@ public class Principal {
         }
     }
 
-    private DadosLivro getDatosLibro() {
+    private DadosLivro getDatosLivro() {
         System.out.println("Insira o nome do livro que você deseja procurar");
         var tituloLivro = teclado.nextLine();
 
@@ -108,7 +105,7 @@ public class Principal {
         return null;
     }
 
-    private void listarLibrosRegistrados() {
+    private void listarLivrosRegistrados() {
         livroRepository.findAll(Sort.by(Sort.Direction.ASC, "titulo")).forEach(System.out::println);
     }
 
@@ -138,23 +135,26 @@ public class Principal {
     }
 
 
-    private void exhibirEstadisticasDeDescargasDeLosLibrosRegistrados() {
-        // Quantidade de livros por idioma
-        Map<List<String>, Long> livrosPorIdioma = livroRepository.findAll().stream()
-                .collect(Collectors.groupingBy(Livro::getIdiomas, Collectors.counting()
-                ));
+    private void listarLivrosPorIdioma() {
+        var perguntaIdioma = """
+                Insira o idioma para realizar a busca:
+                es- espanhol
+                en- inglês
+                fr- francês
+                pt- português
+                """;
+        System.out.println(perguntaIdioma);
+        var idioma = teclado.nextLine();
 
-        System.out.println("Quantidade de livros por idioma");
-        livrosPorIdioma.forEach((idioma, totalLivros) ->
-                System.out.println(idioma + ": " + totalLivros)); //
-
-        // Cantidad de descargas por idiomas
-        Map<List<String>, Double> descargasPorIdioma = livroRepository.findAll().stream()
-                .collect(Collectors.groupingBy(Livro::getIdiomas, Collectors.summingDouble(Livro::getNumeroDeDownloads)
-                ));
-
-        System.out.println("Quantidade de livros baixados por idioma");
-        descargasPorIdioma.forEach((idioma, totalDeDownloads) ->
-                System.out.println(idioma + ": " + totalDeDownloads));
+        if (!idioma.isBlank()) {
+            List<Livro> livrosPorIdioma = livroRepository.findByIdiomaEqualsIgnoreCase(idioma);
+            if (livrosPorIdioma.isEmpty()) {
+                System.out.println("Não existem livros nesse idioma no banco de dados.");
+            } else {
+                livrosPorIdioma.forEach(System.out::println);
+            }
+        } else {
+            System.out.println("Campo de texto vazio, por favor, tente novamente e insira uma opção válida.");
+        }
     }
 }
